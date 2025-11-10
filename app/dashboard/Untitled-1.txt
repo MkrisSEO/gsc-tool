@@ -1,0 +1,308 @@
+# Feature Requirements
+
+## 1. INDEXING REPORT (Under "Indexing" Tab)
+
+### Overview Page
+Create an indexing status report that shows:
+- Summary cards showing counts for:
+  - "Submitted and indexed" (green)
+  - "Crawled - currently not indexed" (orange)
+  - "Discovered - currently not indexed" (red)
+  - "URL is unknown to Google" (blue)
+- Stacked bar chart showing daily distribution of these statuses over selected time period
+- Pages table below with columns:
+  - URL (clickable links)
+  - STATUS (with status badge/color)
+  - LAST CRAWL (date)
+  - RICH RESULTS (status indicator)
+  - LAST INSPECTION (date with "inspected daily" note)
+
+### Detail View
+When clicking on a specific indexing issue category:
+- Filter to show only URLs with that specific status
+- Maintain same table structure but filtered
+- Add "Request Indexing" action button for discovered/not-indexed URLs
+- Show status change history if available
+
+**Data Structure Needed:**
+```javascript
+{
+  url: string,
+  status: 'submitted_indexed' | 'crawled_not_indexed' | 'discovered_not_indexed' | 'unknown',
+  lastCrawl: Date,
+  richResults: boolean,
+  lastInspection: Date,
+  inspectionFrequency: string
+}
+```
+
+## 2. ANNOTATIONS FEATURE
+
+### Graph Interaction (Dashboard Tab)
+- Make the performance graph clickable
+- On click at specific date:
+  - Open modal/popup "Note" dialog
+  - Show selected date prominently
+  - Form fields:
+    - **Title** (text input, required)
+    - **Description** (textarea, optional, multi-line)
+    - **Which pages have been impacted?** (radio buttons):
+      - "All Pages" (default)
+      - "Specific Page(s)" - opens URL input field (comma-separated or multi-line)
+      - "Content Group" - dropdown of existing content groups
+  - Save/Cancel buttons
+- Add annotation markers on graph at annotated dates (small flag icons or dots)
+- Hovering over marker shows annotation title
+
+**Data Structure:**
+```javascript
+{
+  id: string,
+  date: Date,
+  title: string,
+  description: string,
+  scope: 'all' | 'specific' | 'content_group',
+  urls: string[], // if scope is 'specific'
+  contentGroupId: string, // if scope is 'content_group'
+  createdAt: Date,
+  createdBy: string
+}
+```
+
+### Annotations Tab/Report View
+Create dedicated "Annotations" navigation item that shows:
+- List of all annotations (chronologically, newest first)
+- For each annotation display:
+  - Title and date
+  - Scope indicator (All Pages / Specific Pages / Content Group name)
+  - Small line graph showing performance trend
+  - Metrics comparison (before vs after):
+    - Clicks (absolute + percentage change)
+    - Impressions (absolute + percentage change)
+    - CTR (absolute + percentage point change)
+    - Avg. Position (absolute + change)
+  - Time period shown: 2 weeks before → annotation date → 2 weeks after
+  - Visual indicator (red/green) for negative/positive changes
+  - "View in Dashboard" link to jump to that date
+- Edit/Delete buttons for each annotation
+
+**Calculation Logic:**
+- Compare 14 days before annotation vs 14 days after
+- For specific URLs/content groups, aggregate only those URLs
+- Show percentage changes with + or - prefix
+- Color code: green for improvements, red for declines
+
+## 3. OPTIMIZE TAB - KEYWORD CANNIBALIZATION
+
+Create a new "Optimize" tab with "Keyword Cannibalization" section:
+
+### Detection Logic
+Identify queries where:
+- Multiple URLs (2+) received impressions in the last 28 days
+- OR the ranking URL shifted between different pages
+
+### Display Table
+Columns:
+- **Query** (search term)
+- **# URLs** (count of competing URLs)
+- **Total Clicks** (sum across all URLs)
+- **Total Impressions** (sum across all URLs)
+- **Avg Position** (weighted average)
+- **Impact** (severity indicator: High/Medium/Low)
+
+### Expandable Row Detail
+When clicking a query, expand to show:
+- List of all competing URLs
+- For each URL:
+  - Clicks, Impressions, CTR, Position
+  - Sparkline chart showing position over 28 days
+  - Percentage of total clicks for this query
+- Visual indicator if URL ranking is unstable (position variance)
+
+**Impact Calculation:**
+- High: 3+ URLs, >100 total clicks
+- Medium: 2-3 URLs, 20-100 clicks  
+- Low: 2 URLs, <20 clicks
+
+**Data Structure:**
+```javascript
+{
+  query: string,
+  urls: [
+    {
+      url: string,
+      clicks: number,
+      impressions: number,
+      ctr: number,
+      position: number,
+      positionHistory: Array,
+      clickShare: number // percentage of total clicks
+    }
+  ],
+  totalClicks: number,
+  totalImpressions: number,
+  avgPosition: number,
+  impact: 'high' | 'medium' | 'low',
+  positionVolatility: number // std deviation
+}
+```
+
+## 4. SETTINGS TAB - CONTENT GROUPS
+
+Create Content Groups management interface:
+
+### Setup Form
+Header: "Content Groups" with help guide link
+Description text: "Grouping related pages allows you to analyze the performance of multiple pages much more efficiently. Common use cases include a group for all blog posts, pages related to a similar topic, multiple landing pages, or pSEO pages."
+
+Form fields:
+- **Group Name** (text input, required)
+- **Conditions:** (can add multiple conditions)
+  - Dropdown selector:
+    - INCLUSION options:
+      - "contains"
+      - "equals"
+      - "matches regex"
+      - "matches any (batch)" - for pasting URL list
+    - EXCLUSION options:
+      - "doesn't contain"
+      - "doesn't equal"
+      - "doesn't match regex"
+      - "doesn't match any (batch)"
+  - Text input for pattern/URL
+  - "Add condition" button for multiple rules
+- **Preview** section showing:
+  - Count of URLs matching current rules
+  - Sample URLs (first 10)
+- Save/Cancel buttons
+
+### Content Groups List
+- Table showing all created content groups:
+  - Name
+  - Rule summary (e.g., "Contains: /blog/")
+  - URL count
+  - Actions (Edit, Delete)
+
+### Integration with Dashboard
+- Add "Content Groups" tab to main dashboard
+- Performance charts filtered by content group
+- All metrics calculated only for URLs in the group
+
+**Data Structure:**
+```javascript
+{
+  id: string,
+  name: string,
+  conditions: [
+    {
+      type: 'inclusion' | 'exclusion',
+      operator: 'contains' | 'equals' | 'regex' | 'batch',
+      value: string | string[], // string array for batch
+    }
+  ],
+  createdAt: Date,
+  urlCount: number,
+  matchedUrls: string[] // cached for performance
+}
+```
+
+## 5. TECHNICAL REQUIREMENTS
+
+### Database Schema Updates
+Create tables/collections for:
+- `annotations`
+- `content_groups`
+- `content_group_conditions`
+
+### API Endpoints Needed
+```
+POST /api/annotations
+GET /api/annotations
+PUT /api/annotations/:id
+DELETE /api/annotations/:id
+GET /api/annotations/:id/impact
+
+POST /api/content-groups
+GET /api/content-groups
+PUT /api/content-groups/:id
+DELETE /api/content-groups/:id
+POST /api/content-groups/:id/preview
+
+GET /api/optimize/keyword-cannibalization
+GET /api/indexing/status
+```
+
+### Performance Considerations
+- Cache content group URL matching results
+- Index database queries on date ranges
+- Pagination for large data sets
+- Lazy loading for charts
+
+## 6. UI/UX SPECIFICATIONS
+
+### Design System
+- Match existing SEOgets design language
+- Use consistent color scheme:
+  - Green: positive metrics, indexed
+  - Red: negative metrics, errors, not indexed
+  - Blue: neutral information
+  - Orange: warnings
+- Modal dialogs should be centered, responsive
+- Tables should be sortable and searchable
+
+### Responsive Behavior
+- Mobile: Stack cards vertically, collapsible sections
+- Tablet: 2-column layouts where appropriate
+- Desktop: Full table views
+
+### Loading States
+- Skeleton loaders for charts and tables
+- Progress indicators for data fetching
+- Error boundaries with retry options
+
+## 7. IMPLEMENTATION PRIORITY
+
+Phase 1:
+1. Indexing report basic view
+2. Annotations creation and display on graph
+3. Content groups setup
+
+Phase 2:
+1. Annotations impact report
+2. Keyword cannibalization detection
+3. Indexing detail views
+
+Phase 3:
+1. Polish and optimization
+2. Advanced filtering
+3. Export capabilities
+
+## 8. TESTING REQUIREMENTS
+
+- Unit tests for:
+  - Content group matching logic
+  - Keyword cannibalization detection
+  - Impact calculation formulas
+- Integration tests for:
+  - Annotation CRUD operations
+  - Content group URL matching
+- E2E tests for:
+  - Complete annotation flow
+  - Content group creation and filtering
+
+# IMPORTANT NOTES
+- All date ranges should respect the dashboard's global date filter
+- Maintain data consistency with Google Search Console
+- Implement proper error handling for API failures
+- Add loading states for all async operations
+- Ensure all features work with the existing authentication system
+- Follow existing code patterns and conventions in the project
+
+# OUTPUT EXPECTATIONS
+Please implement these features following best practices for:
+- Clean, maintainable code
+- Proper TypeScript typing (if using TS)
+- Reusable components
+- Efficient data fetching and state management
+- Accessibility (ARIA labels, keyboard navigation)
+- Performance optimization

@@ -1,0 +1,334 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  
+  sites     Site[]
+}
+
+model Site {
+  id            String    @id @default(cuid())
+  siteUrl       String    @unique
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName   String?
+  createdAt     DateTime  @default(now())
+  lastSyncedAt  DateTime?
+  
+  gscData           GSCDataPoint[]
+  queryCountingAggregates QueryCountingAggregate[]
+  geoQueries        GEOQuery[]
+  annotations       Annotation[]
+  contentGroups     ContentGroup[]
+  contentGenerations ContentGeneration[]
+  indexingSnapshots IndexingSnapshot[]
+  indexingUrlHistories IndexingUrlHistory[]
+  rankKeywords      RankKeyword[]
+  rankHistories     RankHistory[]
+  
+  @@index([userId])
+}
+
+// ============================================
+// GSC DATA
+// ============================================
+
+model GSCDataPoint {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @db.Date
+  query       String   @default("")
+  page        String   @default("")
+  country     String   @default("")
+  device      String   @default("")
+  
+  clicks      Int
+  impressions Int
+  ctr         Float
+  position    Float
+  
+  fetchedAt   DateTime @default(now())
+  
+  @@unique([siteId, date, query, page, country, device])
+  @@index([siteId, date])
+  @@index([siteId, query, date])
+  @@index([siteId, page, date])
+  @@index([siteId, date, query, page])
+  @@index([siteId, query, page, date, position])
+}
+
+// ============================================
+// QUERY COUNTING AGGREGATES (for fast dashboard loads)
+// ============================================
+
+model QueryCountingAggregate {
+  id              String   @id @default(cuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  date            DateTime @db.Date
+  position1to3    Int      @default(0)
+  position4to10   Int      @default(0)
+  position11to20  Int      @default(0)
+  position21plus  Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([siteId, date])
+  @@index([siteId, date])
+}
+
+// ============================================
+// GEO TRACKING
+// ============================================
+
+model GEOQuery {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  query       String
+  active      Boolean  @default(true)
+  priority    Int      @default(1)
+  createdAt   DateTime @default(now())
+  
+  testResults GEOTestResult[]
+  
+  @@unique([siteId, query])
+  @@index([siteId, active])
+}
+
+model GEOTestResult {
+  id              String   @id @default(cuid())
+  queryId         String
+  query           GEOQuery @relation(fields: [queryId], references: [id], onDelete: Cascade)
+  
+  engine          String
+  cited           Boolean
+  usedAsSource    Boolean  @default(false)
+  citationCount   Int
+  visibilityScore Int
+  sourcesFound    Int      @default(0)
+  
+  responseText    String   @db.Text
+  competitors     Json
+  searchQueries   Json?
+  groundingMetadata Json?
+  
+  testedAt        DateTime @default(now())
+  
+  @@index([queryId, testedAt(sort: Desc)])
+  @@index([queryId, engine])
+}
+
+// ============================================
+// ANNOTATIONS
+// ============================================
+
+model Annotation {
+  id              String   @id @default(cuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  date            DateTime @db.Date
+  title           String
+  description     String   @db.Text
+  scope           String
+  urls            Json?
+  contentGroupId  String?
+  
+  createdAt       DateTime @default(now())
+  createdBy       String
+  
+  @@index([siteId, date])
+}
+
+// ============================================
+// CONTENT GROUPS
+// ============================================
+
+model ContentGroup {
+  id                String   @id @default(cuid())
+  siteId            String
+  site              Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  name              String
+  color             String?
+  includeConditions Json
+  excludeConditions Json?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([siteId])
+}
+
+// ============================================
+// CONTENT GENERATOR
+// ============================================
+
+model ContentGeneration {
+  id               String   @id @default(cuid())
+  siteId           String
+  site             Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  targetQuery      String
+  targetUrl        String?
+  prompt           String   @db.Text
+  model            String
+  
+  generatedContent String   @db.Text
+  metadata         Json?
+  
+  status           String   @default("draft")
+  qualityScore     Int?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  publishedAt      DateTime?
+  
+  @@index([siteId, status])
+  @@index([siteId, targetQuery])
+}
+
+// ============================================
+// INDEXING DATA
+// ============================================
+
+model IndexingSnapshot {
+  id              String   @id @default(cuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  snapshotDate    DateTime @db.Date
+  
+  // Summary counts
+  submittedIndexed       Int @default(0)
+  crawledNotIndexed      Int @default(0)
+  discoveredNotIndexed   Int @default(0)
+  unknown                Int @default(0)
+  totalUrls              Int @default(0)
+  
+  // Metadata
+  inspectedUrls   Int
+  fetchedAt       DateTime @default(now())
+  
+  urlHistories    IndexingUrlHistory[]
+  
+  @@unique([siteId, snapshotDate])
+  @@index([siteId, snapshotDate])
+}
+
+model IndexingUrlHistory {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  snapshotId  String
+  snapshot    IndexingSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @db.Date
+  url         String
+  
+  // Status classification
+  status      String   // 'submitted_indexed' | 'crawled_not_indexed' | 'discovered_not_indexed' | 'unknown'
+  
+  // Detailed status info
+  coverageState String?
+  verdict       String?
+  
+  // Google Search Console metrics
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  ctr         Float    @default(0)
+  position    Float    @default(0)
+  
+  // Crawl information
+  lastCrawl           String?
+  inspectionFrequency String   @default("unknown")
+  richResults         Boolean  @default(false)
+  
+  // Metadata
+  inspected   Boolean  @default(false)
+  fetchedAt   DateTime @default(now())
+  
+  @@unique([siteId, date, url])
+  @@index([siteId, date])
+  @@index([siteId, url])
+  @@index([siteId, status, date])
+  @@index([snapshotId])
+}
+
+// ============================================
+// RANK TRACKING
+// ============================================
+
+model RankKeyword {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  keyword     String
+  targetUrl   String?
+  tags        String[] @default([])
+  active      Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  history     RankHistory[]
+  
+  @@unique([siteId, keyword])
+  @@index([siteId, active])
+  @@index([siteId, keyword])
+}
+
+model RankHistory {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  
+  keywordId   String
+  keyword     RankKeyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @db.Date
+  
+  // GSC Data
+  position    Float
+  clicks      Int
+  impressions Int
+  ctr         Float
+  
+  // DataForSEO Data (optional, from live checks)
+  dfPosition      Float?
+  dfUrl           String?
+  dfTitle         String?
+  dfDomain        String?
+  dfSerpFeatures  Json?   // Featured snippet, PAA, etc.
+  dfLastChecked   DateTime?
+  
+  fetchedAt   DateTime @default(now())
+  
+  @@unique([keywordId, date])
+  @@index([keywordId, date])
+  @@index([siteId, date])
+}

@@ -1,0 +1,142 @@
+Data-kilde og logik for Query Counting
+Data-flow
+1. URL-scope (fra dashboard/filter)
+
+Start med de URL'er der vises i den aktuelle dashboard-visning
+Dette kan være:
+
+Alle URL'er fra domænet (dashboard forside)
+URL'er filtreret af bruger
+En specifik URL (hvis man er på URL-niveau)
+
+
+
+2. Query-hentning fra GSC
+
+For hver URL i scope:
+
+Hent alle queries fra Google Search Console der har ført trafik til denne URL
+Hent positionen for hver query på den givne dato
+Hent dette for hele den valgte tidsperiode
+
+
+
+3. Position-gruppering
+
+For hvert datapunkt (dag/uge/måned):
+
+Gennemgå alle unikke queries
+Gruppér hver query baseret på dens gennemsnitlige position den dag:
+
+Position 1-3 → Gruppe "1-3"
+Position 4-10 → Gruppe "4-10"
+Position 11-20 → Gruppe "11-20"
+Position 21+ → Gruppe "21+"
+
+
+Tæl antal queries i hver gruppe
+
+
+
+4. Visualisering
+
+Plot antallet af queries i hver positionsgruppe over tid
+Vis som stacked area chart eller separate linjer
+
+Eksempel på data-logik
+Scenario: Dashboard viser 3 URL'er
+URLs i scope:
+- example.com/produkter
+- example.com/om-os
+- example.com/kontakt
+
+GSC data for 15. oktober 2025:
+
+example.com/produkter:
+  - "køb produkter" → position 2.5 → Gruppe 1-3
+  - "bedste produkter" → position 7.2 → Gruppe 4-10
+  - "produkter online" → position 15.8 → Gruppe 11-20
+
+example.com/om-os:
+  - "om virksomheden" → position 4.1 → Gruppe 4-10
+  - "virksomhed historie" → position 25.3 → Gruppe 21+
+
+example.com/kontakt:
+  - "kontakt os" → position 1.2 → Gruppe 1-3
+  - "telefonnummer" → position 8.5 → Gruppe 4-10
+
+Resultat for 15. oktober:
+- Position 1-3: 2 queries
+- Position 4-10: 3 queries
+- Position 11-20: 1 query
+- Position 21+: 1 query
+- Total: 7 queries
+GSC API kald
+Endpoint: Google Search Console API - Search Analytics
+Parametre:
+json{
+  "startDate": "2025-10-08",
+  "endDate": "2025-11-05",
+  "dimensions": ["query", "page", "date"],
+  "dimensionFilterGroups": [{
+    "filters": [{
+      "dimension": "page",
+      "operator": "includingRegex",
+      "expression": "(url1|url2|url3)"
+    }]
+  }],
+  "rowLimit": 25000
+}
+Response data:
+
+Query (søgeord)
+URL (side)
+Date (dato)
+Position (gennemsnitlig position)
+Clicks, Impressions, CTR
+
+Data-processering
+For hver dag i perioden:
+
+Hent alle (query, URL, position) kombinationer
+Gruppér queries efter position (ignorer URL i denne sammenhæng)
+Hvis samme query ranker for flere URL'er:
+
+Brug den bedste position (laveste tal)
+Alternativt: Tæl query'en kun én gang per dato
+
+
+Aggregér til positionsgrupper
+Gem count for hver gruppe
+
+For procentberegninger (ved comparison):
+
+Hent query counts for comparison period på samme måde
+Beregn forskel mellem perioder
+Vis som procent
+
+Håndtering af edge cases
+Samme query ranker på flere URL'er:
+
+Løsning: Brug den bedste (laveste) position
+Eksempel: "produkter" ranker position 5 på side A og position 12 på side B → Tæl som position 5 (gruppe 4-10)
+
+Query skifter position dramatisk inden for perioden:
+
+Løsning: Brug den position query har på den specifikke dato
+Query kan dermed bevæge sig mellem grupper over tid
+
+URL'er uden queries:
+
+Løsning: Ignorer disse URL'er
+Vis kun data for URL'er der faktisk har query-data fra GSC
+
+Manglende GSC data for perioden:
+
+Løsning: Vis besked "Ingen GSC data tilgængelig for denne periode"
+
+Performance optimering
+
+Cache GSC data - Hent ikke hver gang grafen indlæses
+Aggregér på server-side - Send ikke rå GSC data til frontend
+Brug database - Gem processeret data for hurtig adgang

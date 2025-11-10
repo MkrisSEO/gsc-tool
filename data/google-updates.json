@@ -1,0 +1,145 @@
+[
+  {
+    "id": "nov-2024-core",
+    "date": "2024-11-11",
+    "completionDate": "2024-12-03",
+    "name": "November 2024 Core Update",
+    "type": "core",
+    "description": "Google released a broad core algorithm update affecting search rankings across multiple industries. The rollout completed on December 3, 2024.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "oct-2024-core",
+    "date": "2024-10-15",
+    "completionDate": "2024-10-28",
+    "name": "October 2024 Core Update",
+    "type": "core",
+    "description": "A core algorithm update focusing on content quality and user experience. Sites with thin or low-quality content may have seen ranking changes.",
+    "source": "Google"
+  },
+  {
+    "id": "aug-2024-core",
+    "date": "2024-08-15",
+    "completionDate": "2024-09-03",
+    "name": "August 2024 Core Update",
+    "type": "core",
+    "description": "Major core update affecting search rankings globally. Focus on rewarding helpful, people-first content.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "june-2024-spam",
+    "date": "2024-06-20",
+    "completionDate": "2024-07-01",
+    "name": "June 2024 Spam Update",
+    "type": "spam",
+    "description": "Spam-fighting update targeting manipulative link practices and low-quality content farms.",
+    "source": "Google"
+  },
+  {
+    "id": "may-2024-ai",
+    "date": "2024-05-14",
+    "name": "AI Overviews Launched",
+    "type": "feature",
+    "description": "Google launched AI-generated summaries in search results, potentially affecting click-through rates for traditional organic results.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "mar-2024-core",
+    "date": "2024-03-05",
+    "completionDate": "2024-04-19",
+    "name": "March 2024 Core Update",
+    "type": "core",
+    "description": "One of the largest core updates, with a 45-day rollout. Significant impact on content quality assessment and spam reduction.",
+    "source": "Google"
+  },
+  {
+    "id": "nov-2023-reviews",
+    "date": "2023-11-08",
+    "completionDate": "2023-12-07",
+    "name": "November 2023 Reviews Update",
+    "type": "reviews",
+    "description": "Update targeting review content quality, promoting authentic first-hand reviews and demoting thin affiliate content.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "nov-2023-core",
+    "date": "2023-11-02",
+    "completionDate": "2023-11-28",
+    "name": "November 2023 Core Update",
+    "type": "core",
+    "description": "Broad core algorithm update affecting multiple ranking signals and content assessment criteria.",
+    "source": "Google"
+  },
+  {
+    "id": "oct-2023-core",
+    "date": "2023-10-05",
+    "completionDate": "2023-10-19",
+    "name": "October 2023 Core Update",
+    "type": "core",
+    "description": "Core update focusing on content relevance and quality signals.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "oct-2023-spam",
+    "date": "2023-10-04",
+    "completionDate": "2023-10-20",
+    "name": "October 2023 Spam Update",
+    "type": "spam",
+    "description": "Spam update targeting manipulative practices and low-quality sites trying to game search rankings.",
+    "source": "Google"
+  },
+  {
+    "id": "sep-2023-helpful",
+    "date": "2023-09-14",
+    "completionDate": "2023-09-28",
+    "name": "September 2023 Helpful Content Update",
+    "type": "helpful_content",
+    "description": "Update promoting content created for people rather than search engines. Sites with AI-generated thin content may have been affected.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "aug-2023-core",
+    "date": "2023-08-22",
+    "completionDate": "2023-09-07",
+    "name": "August 2023 Core Update",
+    "type": "core",
+    "description": "Broad core update with focus on E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness) signals.",
+    "source": "Google"
+  },
+  {
+    "id": "mar-2025-core",
+    "date": "2025-03-13",
+    "completionDate": "2025-03-27",
+    "name": "March 2025 Core Update",
+    "type": "core",
+    "description": "Google announced a core algorithm update affecting broad ranking signals. The update completed rollout in two weeks.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "june-2025-core",
+    "date": "2025-06-30",
+    "completionDate": "2025-07-17",
+    "name": "June 2025 Core Update",
+    "type": "core",
+    "description": "Google began rolling out its June core update, focusing on content quality and user experience. The rollout took over two weeks to complete.",
+    "source": "Google"
+  },
+  {
+    "id": "aug-2025-spam",
+    "date": "2025-08-26",
+    "completionDate": "2025-09-15",
+    "name": "August 2025 Spam Update",
+    "type": "spam",
+    "description": "Google launched the August spam update, targeting spam and manipulative practices in search results globally. The rollout took several weeks to finish.",
+    "source": "Google Search Central"
+  },
+  {
+    "id": "sep-2025-tracker-changes",
+    "date": "2025-09-12",
+    "name": "Changes to Third-Party Rank Tracker Tools",
+    "type": "technical",
+    "description": "Google has made changes to their Search Engine Results Pages which have affected most third-party rank tracker tools. As a result, GSC is now reporting significantly lower impressions for keywords ranked beyond position 20.",
+    "source": "Google"
+  }
+]
+

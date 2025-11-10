@@ -1,0 +1,39 @@
+{
+  "name": "gsc-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "migrate:data": "dotenv -e .env.local -- tsx scripts/migrate-to-database.ts",
+    "sync:query-counting": "dotenv -e .env.local -- tsx scripts/sync-query-counting.ts",
+    "prisma:push": "dotenv -e .env.local -- prisma db push",
+    "prisma:studio": "dotenv -e .env.local -- prisma studio"
+  },
+  "dependencies": {
+    "@google-analytics/data": "^5.2.1",
+    "@google/generative-ai": "^0.21.0",
+    "@prisma/client": "^6.19.0",
+    "dotenv": "^17.2.3",
+    "googleapis": "^131.0.0",
+    "next": "14.2.33",
+    "next-auth": "^4.24.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "recharts": "^2.10.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "^18.2.25",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5",
+    "prisma": "^6.19.0",
+    "tsx": "^4.20.6",
+    "typescript": "5.5.4"
+  }
+}
