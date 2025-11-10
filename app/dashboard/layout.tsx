@@ -53,27 +53,14 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         >
           {/* Morningbound Logo */}
           <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, marginRight: 32 }}>
-            <div
+            <img 
+              src="/morningbound-logo-x3.png" 
+              alt="Morningbound Logo"
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: '#0071E3',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                fontWeight: 700,
-                color: '#FFFFFF',
-                fontStyle: 'italic',
-                boxShadow: '0 4px 12px rgba(0, 113, 227, 0.3)',
+                height: 32,
+                width: 'auto',
               }}
-            >
-              B
-            </div>
-            <span style={{ fontSize: 19, fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.8px' }}>
-              morningbound
-            </span>
+            />
             <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255, 255, 255, 0.5)', marginLeft: 8 }}>
               GSC Tool
             </span>
