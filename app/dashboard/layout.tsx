@@ -52,7 +52,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
           }}
         >
           {/* Morningbound Logo */}
-          <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12, marginRight: 32 }}>
+          <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: 32 }}>
             <img 
               src="/morningbound-logo-x3.png" 
               alt="Morningbound Logo"
@@ -61,9 +61,6 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
                 width: 'auto',
               }}
             />
-            <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(255, 255, 255, 0.5)', marginLeft: 8 }}>
-              GSC Tool
-            </span>
           </Link>
 
           {/* Navigation Tabs */}
