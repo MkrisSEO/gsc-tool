@@ -120,18 +120,42 @@ export async function getContentGroupById(id: string): Promise<ContentGroup | nu
 
 export async function createContentGroup(group: ContentGroup): Promise<ContentGroup> {
   try {
+    console.log('💾 [createContentGroup] Starting...', {
+      groupId: group.id,
+      name: group.name,
+      siteUrl: group.siteUrl,
+      urlCount: group.urlCount,
+      conditionCount: group.conditions.length,
+    });
+
     // Get or create site
     let site = await prisma.site.findUnique({
       where: { siteUrl: group.siteUrl },
     });
 
     if (!site) {
+      console.log('💾 [createContentGroup] Creating new site:', group.siteUrl);
       site = await prisma.site.create({
         data: {
           siteUrl: group.siteUrl,
         },
       });
+      console.log('✅ [createContentGroup] Site created:', site.id);
+    } else {
+      console.log('✅ [createContentGroup] Site exists:', site.id);
     }
+
+    console.log('💾 [createContentGroup] Creating content group...', {
+      siteId: site.id,
+      dataToInsert: {
+        id: group.id,
+        name: group.name,
+        conditionsType: typeof group.conditions,
+        urlCountType: typeof group.urlCount,
+        matchedUrlsType: typeof group.matchedUrls,
+        matchedUrlsLength: group.matchedUrls?.length,
+      }
+    });
 
     const created = await prisma.contentGroup.create({
       data: {
@@ -147,6 +171,11 @@ export async function createContentGroup(group: ContentGroup): Promise<ContentGr
       },
     });
 
+    console.log('✅ [createContentGroup] Success!', {
+      id: created.id,
+      name: created.name,
+    });
+
     return {
       id: created.id,
       name: created.name,
@@ -157,8 +186,13 @@ export async function createContentGroup(group: ContentGroup): Promise<ContentGr
       urlCount: created.urlCount,
       matchedUrls: (created.matchedUrls as string[]) || [],
     };
-  } catch (error) {
-    console.error('Failed to create content group in database:', error);
+  } catch (error: any) {
+    console.error('❌ [createContentGroup] Database error:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack,
+    });
     throw error;
   }
 }
