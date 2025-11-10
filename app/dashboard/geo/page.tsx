@@ -382,13 +382,13 @@ export default function GEOPage() {
               margin: '0 auto 16px',
             }}
           />
-          <div style={{ fontSize: 16, color: 'rgba(255, 255, 255, 0.7)', marginBottom: 8 }}>
+          <div style={{ fontSize: 16, color: '#1f2937', marginBottom: 8, fontWeight: 600 }}>
             Setting up GEO tracking...
           </div>
-          <div style={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', marginBottom: 4 }}>
+          <div style={{ fontSize: 14, color: '#4b5563', marginBottom: 4 }}>
             Importing and testing top 200 informational queries from Search Console
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.6)' }}>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>
             This takes ~1 minute with Tier 1 API.
             Testing each query on Gemini 2.0 Flash with Google Search...
           </div>
