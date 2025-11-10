@@ -45,12 +45,13 @@ export default function GEOPage() {
     }
   }, [selectedSite]);
 
-  // Auto-import top GSC queries on first visit
-  useEffect(() => {
-    if (selectedSite && queries.length === 0 && !loading && !autoImported) {
-      autoImportTopQueries();
-    }
-  }, [selectedSite, queries, loading, autoImported]);
+  // ✅ DISABLED auto-import - Users can manually click "Import from GSC" instead
+  // This prevents auto-import from running every time user visits the tab
+  // useEffect(() => {
+  //   if (selectedSite && queries.length === 0 && !loading && !autoImported) {
+  //     autoImportTopQueries();
+  //   }
+  // }, [selectedSite, queries, loading, autoImported]);
 
   const fetchQueries = async () => {
     if (!selectedSite) return;
@@ -417,10 +418,47 @@ export default function GEOPage() {
             {/* Tracked Queries Table */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#FFFFFF' }}>
-            Tracked Queries ({queries.length})
-          </h2>
+                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#FFFFFF' }}>
+                  Tracked Queries ({queries.length})
+                </h2>
               </div>
+              
+              {/* Empty state when no queries */}
+              {queries.length === 0 && !loading && (
+                <div
+                  style={{
+                    padding: 48,
+                    textAlign: 'center',
+                    background: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 12,
+                    marginBottom: 24,
+                  }}
+                >
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
+                    No GEO Tracking Queries Yet
+                  </h3>
+                  <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24 }}>
+                    Get started by importing top queries from Google Search Console
+                  </p>
+                  <button
+                    onClick={handleImportFromGSC}
+                    style={{
+                      padding: '12px 24px',
+                      background: '#2563eb',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📥 Import from GSC
+                  </button>
+                </div>
+              )}
               {loading ? (
                 <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255, 255, 255, 0.7)' }}>
                   Loading queries...
