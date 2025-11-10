@@ -13,7 +13,9 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb'
-    }
+    },
+    // ✅ Fix: Disable suspense requirement for useSearchParams
+    missingSuspenseWithCSRBailout: false,
   },
 };
 
