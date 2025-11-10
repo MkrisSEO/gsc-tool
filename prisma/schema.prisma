@@ -165,6 +165,7 @@ model Annotation {
 // ============================================
 // CONTENT GROUPS
 // ============================================
+// Updated: Removed includeConditions/excludeConditions, added conditions/urlCount/matchedUrls
 
 model ContentGroup {
   id                String   @id @default(cuid())
