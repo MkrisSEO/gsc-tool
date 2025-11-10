@@ -64,10 +64,24 @@ export default function RankKeywordsTable({
     // Find latest DataForSEO check (any record with dfPosition)
     const latestDfRecord = kw.history.find(h => h.dfPosition && h.dfLastChecked);
 
+    // ✅ Calculate 30-day total clicks and impressions
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const last30DaysRecords = kw.history.filter(h => {
+      return h.position < 900 && new Date(h.date) >= thirtyDaysAgo;
+    });
+    
+    const total30dClicks = last30DaysRecords.reduce((sum, h) => sum + (h.clicks || 0), 0);
+    const total30dImpressions = last30DaysRecords.reduce((sum, h) => sum + (h.impressions || 0), 0);
+
     // Debug logging
     console.log(`[Table] Keyword "${kw.keyword}":`, {
       latestGscDate: latestGscRecord?.date,
       gscPosition: latestGscRecord?.position,
+      last30dClicks: total30dClicks,
+      last30dImpressions: total30dImpressions,
+      last30dDays: last30DaysRecords.length,
       latestDfDate: latestDfRecord?.date,
       dfPosition: latestDfRecord?.dfPosition,
       dfLastChecked: latestDfRecord?.dfLastChecked,
@@ -76,8 +90,8 @@ export default function RankKeywordsTable({
     return {
       ...kw,
       currentPosition: latestGscRecord?.position || null,
-      currentClicks: latestGscRecord?.clicks || 0,
-      currentImpressions: latestGscRecord?.impressions || 0,
+      currentClicks: total30dClicks,
+      currentImpressions: total30dImpressions,
       lastUpdate: latestGscRecord?.date || null,
       dfPosition: latestDfRecord?.dfPosition || null,
       dfLastChecked: latestDfRecord?.dfLastChecked || null,
@@ -264,8 +278,9 @@ export default function RankKeywordsTable({
                     cursor: 'pointer',
                     userSelect: 'none',
                   }}
+                  title="Total clicks in the last 30 days"
                 >
-                  Clicks {sortBy === 'clicks' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  Clicks (30d) {sortBy === 'clicks' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th
                   style={{
@@ -275,8 +290,9 @@ export default function RankKeywordsTable({
                     fontWeight: 600,
                     color: '#374151',
                   }}
+                  title="Total impressions in the last 30 days"
                 >
-                  Impressions
+                  Impressions (30d)
                 </th>
                 <th
                   style={{
