@@ -104,11 +104,21 @@ export default function IndexingPage() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
+      let finalData: any = null;
+
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
           console.log('✅ Stream complete');
+          // ✅ Ensure UI updates even if last chunk parsing failed
+          if (finalData) {
+            setData(finalData);
+            setIsCachedData(false);
+          }
+          setProgress(null);
+          setLoading(false);
+          setIsRefreshing(false);
           break;
         }
 
@@ -126,7 +136,8 @@ export default function IndexingPage() {
               }
 
               if (parsed.done) {
-                console.log('📦 Final data received:', parsed);
+                console.log('📦 Final data received');
+                finalData = parsed; // Store for use when stream completes
                 setData(parsed as IndexingApiResponse);
                 setIsCachedData(false); // Fresh data from Google API
                 setProgress(null);
@@ -138,6 +149,7 @@ export default function IndexingPage() {
               }
             } catch (parseError) {
               console.error('Failed to parse SSE data:', parseError);
+              // Continue reading stream despite parse errors
             }
           }
         }
