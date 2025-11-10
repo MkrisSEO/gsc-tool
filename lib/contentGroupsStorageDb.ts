@@ -24,26 +24,35 @@ export function generateContentGroupId(): string {
   return `cg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// ✅ RAW SQL - Bypasses Prisma Client cache issues
 export async function getAllContentGroups(): Promise<ContentGroup[]> {
   try {
-    const groups = await prisma.contentGroup.findMany({
-      include: {
-        site: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const groups = await prisma.$queryRaw<Array<{
+      id: string;
+      name: string;
+      siteId: string;
+      conditions: any;
+      urlCount: number;
+      matchedUrls: any;
+      createdAt: Date;
+      updatedAt: Date;
+      siteUrl: string;
+    }>>`
+      SELECT cg.*, s."siteUrl"
+      FROM "ContentGroup" cg
+      INNER JOIN "Site" s ON cg."siteId" = s.id
+      ORDER BY cg."createdAt" DESC
+    `;
 
     return groups.map((g) => ({
       id: g.id,
       name: g.name,
-      siteUrl: g.site.siteUrl,
+      siteUrl: g.siteUrl,
       conditions: g.conditions as Condition[],
       createdAt: g.createdAt.toISOString(),
       updatedAt: g.updatedAt.toISOString(),
       urlCount: g.urlCount,
-      matchedUrls: (g.matchedUrls as string[]) || [],
+      matchedUrls: g.matchedUrls || [],
     }));
   } catch (error) {
     console.error('Failed to read content groups from database:', error);
@@ -51,37 +60,36 @@ export async function getAllContentGroups(): Promise<ContentGroup[]> {
   }
 }
 
+// ✅ RAW SQL
 export async function getContentGroupsBySite(siteUrl: string): Promise<ContentGroup[]> {
   try {
-    const site = await prisma.site.findUnique({
-      where: { siteUrl },
-    });
-
-    if (!site) {
-      return [];
-    }
-
-    const groups = await prisma.contentGroup.findMany({
-      where: {
-        siteId: site.id,
-      },
-      include: {
-        site: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const groups = await prisma.$queryRaw<Array<{
+      id: string;
+      name: string;
+      siteId: string;
+      conditions: any;
+      urlCount: number;
+      matchedUrls: any;
+      createdAt: Date;
+      updatedAt: Date;
+      siteUrl: string;
+    }>>`
+      SELECT cg.*, s."siteUrl"
+      FROM "ContentGroup" cg
+      INNER JOIN "Site" s ON cg."siteId" = s.id
+      WHERE s."siteUrl" = ${siteUrl}
+      ORDER BY cg."createdAt" DESC
+    `;
 
     return groups.map((g) => ({
       id: g.id,
       name: g.name,
-      siteUrl: g.site.siteUrl,
+      siteUrl: g.siteUrl,
       conditions: g.conditions as Condition[],
       createdAt: g.createdAt.toISOString(),
       updatedAt: g.updatedAt.toISOString(),
       urlCount: g.urlCount,
-      matchedUrls: (g.matchedUrls as string[]) || [],
+      matchedUrls: g.matchedUrls || [],
     }));
   } catch (error) {
     console.error('Failed to read content groups from database:', error);
@@ -89,28 +97,41 @@ export async function getContentGroupsBySite(siteUrl: string): Promise<ContentGr
   }
 }
 
+// ✅ RAW SQL
 export async function getContentGroupById(id: string): Promise<ContentGroup | null> {
   try {
-    const group = await prisma.contentGroup.findUnique({
-      where: { id },
-      include: {
-        site: true,
-      },
-    });
+    const groups = await prisma.$queryRaw<Array<{
+      id: string;
+      name: string;
+      siteId: string;
+      conditions: any;
+      urlCount: number;
+      matchedUrls: any;
+      createdAt: Date;
+      updatedAt: Date;
+      siteUrl: string;
+    }>>`
+      SELECT cg.*, s."siteUrl"
+      FROM "ContentGroup" cg
+      INNER JOIN "Site" s ON cg."siteId" = s.id
+      WHERE cg.id = ${id}
+      LIMIT 1
+    `;
 
-    if (!group) {
+    if (groups.length === 0) {
       return null;
     }
 
+    const g = groups[0];
     return {
-      id: group.id,
-      name: group.name,
-      siteUrl: group.site.siteUrl,
-      conditions: group.conditions as Condition[],
-      createdAt: group.createdAt.toISOString(),
-      updatedAt: group.updatedAt.toISOString(),
-      urlCount: group.urlCount,
-      matchedUrls: (group.matchedUrls as string[]) || [],
+      id: g.id,
+      name: g.name,
+      siteUrl: g.siteUrl,
+      conditions: g.conditions as Condition[],
+      createdAt: g.createdAt.toISOString(),
+      updatedAt: g.updatedAt.toISOString(),
+      urlCount: g.urlCount,
+      matchedUrls: g.matchedUrls || [],
     };
   } catch (error) {
     console.error('Failed to read content group from database:', error);
@@ -118,9 +139,10 @@ export async function getContentGroupById(id: string): Promise<ContentGroup | nu
   }
 }
 
+// ✅ RAW SQL - Bypasses Prisma Client completely
 export async function createContentGroup(group: ContentGroup): Promise<ContentGroup> {
   try {
-    console.log('💾 [createContentGroup] Starting...', {
+    console.log('💾 [createContentGroup RAW SQL] Starting...', {
       groupId: group.id,
       name: group.name,
       siteUrl: group.siteUrl,
@@ -128,114 +150,108 @@ export async function createContentGroup(group: ContentGroup): Promise<ContentGr
       conditionCount: group.conditions.length,
     });
 
-    // Get or create site
-    let site = await prisma.site.findUnique({
-      where: { siteUrl: group.siteUrl },
-    });
+    // Get or create site using raw SQL
+    const existingSites = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "Site" WHERE "siteUrl" = ${group.siteUrl} LIMIT 1
+    `;
 
-    if (!site) {
+    let siteId: string;
+    if (existingSites.length === 0) {
       console.log('💾 [createContentGroup] Creating new site:', group.siteUrl);
-      site = await prisma.site.create({
-        data: {
-          siteUrl: group.siteUrl,
-        },
-      });
-      console.log('✅ [createContentGroup] Site created:', site.id);
+      const newSites = await prisma.$queryRaw<Array<{ id: string }>>`
+        INSERT INTO "Site" ("siteUrl", "createdAt", "updatedAt")
+        VALUES (${group.siteUrl}, NOW(), NOW())
+        RETURNING id
+      `;
+      siteId = newSites[0].id;
+      console.log('✅ [createContentGroup] Site created:', siteId);
     } else {
-      console.log('✅ [createContentGroup] Site exists:', site.id);
+      siteId = existingSites[0].id;
+      console.log('✅ [createContentGroup] Site exists:', siteId);
     }
 
-    console.log('💾 [createContentGroup] Creating content group...', {
-      siteId: site.id,
-      dataToInsert: {
-        id: group.id,
-        name: group.name,
-        conditionsType: typeof group.conditions,
-        urlCountType: typeof group.urlCount,
-        matchedUrlsType: typeof group.matchedUrls,
-        matchedUrlsLength: group.matchedUrls?.length,
-      }
-    });
+    // Insert content group using raw SQL
+    const conditionsJson = JSON.stringify(group.conditions);
+    const matchedUrlsJson = JSON.stringify(group.matchedUrls);
 
-    const created = await prisma.contentGroup.create({
-      data: {
-        id: group.id,
-        siteId: site.id,
-        name: group.name,
-        conditions: group.conditions as any,
-        urlCount: group.urlCount,
-        matchedUrls: group.matchedUrls as any,
-      },
-      include: {
-        site: true,
-      },
-    });
+    console.log('💾 [createContentGroup] Inserting content group...');
 
-    console.log('✅ [createContentGroup] Success!', {
-      id: created.id,
-      name: created.name,
-    });
+    await prisma.$executeRaw`
+      INSERT INTO "ContentGroup" (
+        id, "siteId", name, conditions, "urlCount", "matchedUrls", "createdAt", "updatedAt"
+      ) VALUES (
+        ${group.id},
+        ${siteId},
+        ${group.name},
+        ${conditionsJson}::jsonb,
+        ${group.urlCount},
+        ${matchedUrlsJson}::jsonb,
+        NOW(),
+        NOW()
+      )
+    `;
 
-    return {
-      id: created.id,
-      name: created.name,
-      siteUrl: created.site.siteUrl,
-      conditions: created.conditions as Condition[],
-      createdAt: created.createdAt.toISOString(),
-      updatedAt: created.updatedAt.toISOString(),
-      urlCount: created.urlCount,
-      matchedUrls: (created.matchedUrls as string[]) || [],
-    };
+    console.log('✅ [createContentGroup] Success!');
+
+    return group;
   } catch (error: any) {
-    console.error('❌ [createContentGroup] Database error:', {
+    console.error('❌ [createContentGroup RAW SQL] Error:', {
       message: error.message,
       code: error.code,
-      meta: error.meta,
       stack: error.stack,
     });
     throw error;
   }
 }
 
+// ✅ RAW SQL
 export async function updateContentGroup(
   id: string,
   updates: Partial<ContentGroup>
 ): Promise<ContentGroup | null> {
   try {
-    const updated = await prisma.contentGroup.update({
-      where: { id },
-      data: {
-        ...(updates.name && { name: updates.name }),
-        ...(updates.conditions && { conditions: updates.conditions as any }),
-        ...(updates.urlCount !== undefined && { urlCount: updates.urlCount }),
-        ...(updates.matchedUrls && { matchedUrls: updates.matchedUrls as any }),
-      },
-      include: {
-        site: true,
-      },
-    });
+    const setParts: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
 
-    return {
-      id: updated.id,
-      name: updated.name,
-      siteUrl: updated.site.siteUrl,
-      conditions: updated.conditions as Condition[],
-      createdAt: updated.createdAt.toISOString(),
-      updatedAt: updated.updatedAt.toISOString(),
-      urlCount: updated.urlCount,
-      matchedUrls: (updated.matchedUrls as string[]) || [],
-    };
+    if (updates.name) {
+      setParts.push(`name = $${paramCount++}`);
+      values.push(updates.name);
+    }
+    if (updates.conditions) {
+      setParts.push(`conditions = $${paramCount++}::jsonb`);
+      values.push(JSON.stringify(updates.conditions));
+    }
+    if (updates.urlCount !== undefined) {
+      setParts.push(`"urlCount" = $${paramCount++}`);
+      values.push(updates.urlCount);
+    }
+    if (updates.matchedUrls) {
+      setParts.push(`"matchedUrls" = $${paramCount++}::jsonb`);
+      values.push(JSON.stringify(updates.matchedUrls));
+    }
+    
+    setParts.push(`"updatedAt" = NOW()`);
+    values.push(id);
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE "ContentGroup" SET ${setParts.join(', ')} WHERE id = $${paramCount}`,
+      ...values
+    );
+
+    return await getContentGroupById(id);
   } catch (error) {
     console.error('Failed to update content group in database:', error);
     return null;
   }
 }
 
+// ✅ RAW SQL
 export async function deleteContentGroup(id: string): Promise<boolean> {
   try {
-    await prisma.contentGroup.delete({
-      where: { id },
-    });
+    await prisma.$executeRaw`
+      DELETE FROM "ContentGroup" WHERE id = ${id}
+    `;
     return true;
   } catch (error) {
     console.error('Failed to delete content group from database:', error);
