@@ -1,5 +1,8 @@
 'use client';
 
+// Force dynamic rendering (disable static export)
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
