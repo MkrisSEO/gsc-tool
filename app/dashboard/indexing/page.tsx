@@ -332,7 +332,13 @@ export default function IndexingPage() {
       )}
 
       {loading && (
-        <div style={{ padding: 40, textAlign: 'center' }}>
+        <div style={{ 
+          padding: 40, 
+          textAlign: 'center',
+          background: '#fff',
+          borderRadius: 12,
+          border: '1px solid #e5e7eb',
+        }}>
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 18, fontWeight: 600, color: '#0f172a', marginBottom: 8 }}>
               Inspecting URLs with Google Search Console
