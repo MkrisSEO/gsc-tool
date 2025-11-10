@@ -12,6 +12,9 @@ import { authOptions } from '@/lib/auth';
 import { google } from 'googleapis';
 import prisma from '@/lib/prisma';
 
+// ✅ Increase timeout for sync operations
+export const maxDuration = 300; // 5 minutes for large syncs
+
 const MAX_DAYS = 90; // Sync last 90 days
 const CHUNK_SIZE_DAYS = 7; // Weekly chunks
 

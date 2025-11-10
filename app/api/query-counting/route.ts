@@ -2,6 +2,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
+// ✅ Increase function timeout and connection pool
+export const maxDuration = 60; // 60 seconds for Vercel
+export const dynamic = 'force-dynamic';
+
 interface QueryCountingRequest {
   siteUrl: string;
   startDate: string;
@@ -44,14 +48,27 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body: QueryCountingRequest = await request.json();
-    const { siteUrl, startDate, endDate } = body;
+    const body = await request.json();
+    let { siteUrl, startDate, endDate } = body;
 
-    if (!siteUrl || !startDate || !endDate) {
+    if (!siteUrl) {
       return Response.json(
-        { error: 'Missing required parameters' },
+        { error: 'Missing siteUrl parameter' },
         { status: 400 }
       );
+    }
+
+    // ✅ Use default dates if not provided (last 28 days)
+    if (!startDate || !endDate) {
+      const end = new Date();
+      end.setDate(end.getDate() - 2); // Account for GSC data lag
+      const start = new Date(end);
+      start.setDate(start.getDate() - 27); // 28 days total
+      
+      startDate = start.toISOString().split('T')[0];
+      endDate = end.toISOString().split('T')[0];
+      
+      console.log(`📅 [Query Counting API] Using default dates: ${startDate} to ${endDate}`);
     }
 
     // Check in-memory cache first
