@@ -12,7 +12,7 @@ import {
   generateContentGroupId,
   type ContentGroup,
   type Condition,
-} from '@/lib/contentGroupsStorage';
+} from '@/lib/contentGroupsStorageDb';
 
 // GET /api/content-groups - List all content groups for a site
 export async function GET(request: NextRequest) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   // Get specific content group
   if (id) {
-    const group = getContentGroupById(id);
+    const group = await getContentGroupById(id);
     if (!group) {
       return NextResponse.json({ error: 'Content group not found' }, { status: 404 });
     }
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing siteUrl parameter' }, { status: 400 });
   }
 
-  const groups = getContentGroupsBySite(siteUrl);
+  const groups = await getContentGroupsBySite(siteUrl);
   
   console.log('📋 [GET content-groups]', {
     siteUrl,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       matchedUrls,
     };
 
-    const created = createContentGroup(group);
+    const created = await createContentGroup(group);
 
     console.log('✅ [POST content-group] Created:', {
       id: created.id,
@@ -252,7 +252,7 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    const updated = updateContentGroup(id, updates);
+    const updated = await updateContentGroup(id, updates);
 
     if (!updated) {
       return NextResponse.json({ error: 'Content group not found' }, { status: 404 });
@@ -282,7 +282,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Missing content group ID' }, { status: 400 });
   }
 
-  const deleted = deleteContentGroup(id);
+  const deleted = await deleteContentGroup(id);
 
   if (!deleted) {
     return NextResponse.json({ error: 'Content group not found' }, { status: 404 });
