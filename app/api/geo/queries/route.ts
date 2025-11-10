@@ -8,6 +8,10 @@ import {
   saveTestResult,
 } from '@/lib/geoStorageDb';
 
+// ✅ Increase timeout to prevent connection pool issues
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 /**
  * GET - Get all queries for a site
  */

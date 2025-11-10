@@ -4,6 +4,10 @@ import { getQueries, saveTestResult } from '@/lib/geoStorageDb';
 import { extractCitations, calculateVisibilityScore } from '@/lib/geoTracking';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// ✅ Increase timeout for testing multiple queries
+export const maxDuration = 300; // 5 minutes for large test batches
+export const dynamic = 'force-dynamic';
+
 /**
  * Test all tracked queries for a site
  */

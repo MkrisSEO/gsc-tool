@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth';
 import { extractCitations, calculateVisibilityScore } from '@/lib/geoTracking';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// ✅ Increase timeout for AI query testing
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 interface TestQueryRequest {
   query: string;
   userDomain: string;

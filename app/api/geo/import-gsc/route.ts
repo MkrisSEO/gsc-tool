@@ -3,6 +3,10 @@ import { authOptions } from '@/lib/auth';
 import { google } from 'googleapis';
 import { isInformationalQuery, detectQueryType } from '@/lib/geoTracking';
 
+// ✅ Increase timeout for GSC import operations
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 interface ImportGSCRequest {
   siteUrl: string;
   startDate: string;

@@ -2,6 +2,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getSiteStats } from '@/lib/geoStorageDb';
 
+// ✅ Increase timeout to prevent connection pool issues
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 /**
  * GET - Get GEO statistics for a site
  */

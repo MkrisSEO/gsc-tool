@@ -4,6 +4,10 @@ import { addQuery, saveTestResult } from '@/lib/geoStorageDb';
 import { extractCitations, calculateVisibilityScore } from '@/lib/geoTracking';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// ✅ Increase timeout for importing and testing multiple queries
+export const maxDuration = 300; // 5 minutes for large imports
+export const dynamic = 'force-dynamic';
+
 /**
  * Import queries and immediately test them all
  * This is used for auto-import on first visit
