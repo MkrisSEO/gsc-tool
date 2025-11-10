@@ -47,6 +47,50 @@ export default function OptimizePage() {
   const [error, setError] = useState<string | null>(null);
   const [issues, setIssues] = useState<CannibalizationIssue[]>([]);
   const [expandedQuery, setExpandedQuery] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'query' | 'urlCount' | 'clicks' | 'impressions' | 'position' | 'impact'>('impact');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (column: typeof sortBy) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      // Default sort order based on column type
+      if (column === 'query') {
+        setSortOrder('asc'); // Alfabetisk A-Z
+      } else {
+        setSortOrder('desc'); // Højeste først
+      }
+    }
+  };
+
+  const sortedIssues = [...issues].sort((a, b) => {
+    let comparison = 0;
+
+    switch (sortBy) {
+      case 'query':
+        comparison = a.query.localeCompare(b.query);
+        break;
+      case 'urlCount':
+        comparison = a.urlCount - b.urlCount;
+        break;
+      case 'clicks':
+        comparison = a.totalClicks - b.totalClicks;
+        break;
+      case 'impressions':
+        comparison = a.totalImpressions - b.totalImpressions;
+        break;
+      case 'position':
+        comparison = a.avgPosition - b.avgPosition;
+        break;
+      case 'impact':
+        const impactOrder = { high: 3, medium: 2, low: 1 };
+        comparison = impactOrder[a.impact] - impactOrder[b.impact];
+        break;
+    }
+
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -228,16 +272,46 @@ export default function OptimizePage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <tr>
-                  <th style={thStyle}>Query</th>
-                  <th style={thStyle}># URLs</th>
-                  <th style={thStyle}>Total Clicks</th>
-                  <th style={thStyle}>Total Impressions</th>
-                  <th style={thStyle}>Avg Position</th>
-                  <th style={thStyle}>Impact</th>
+                  <th 
+                    onClick={() => handleSort('query')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Query {sortBy === 'query' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('urlCount')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    # URLs {sortBy === 'urlCount' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('clicks')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Total Clicks {sortBy === 'clicks' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('impressions')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Total Impressions {sortBy === 'impressions' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('position')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Avg Position {sortBy === 'position' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('impact')}
+                    style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    Impact {sortBy === 'impact' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {issues.map((issue) => {
+                {sortedIssues.map((issue) => {
                   const isExpanded = expandedQuery === issue.query;
                   const colors = IMPACT_COLORS[issue.impact];
 
