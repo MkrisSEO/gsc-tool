@@ -2044,7 +2044,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.7)', marginBottom: 4 }}>
                           GSC Clicks (Google only)
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 700 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF' }}>
                           {metrics.totalClicks.value.toLocaleString()}
                         </div>
                       </div>
@@ -2052,7 +2052,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize: 13, color: 'rgba(255, 255, 255, 0.7)', marginBottom: 4 }}>
                           GA4 Sessions (All sources)
                         </div>
-                        <div style={{ fontSize: 24, fontWeight: 700 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#FFFFFF' }}>
                           {ga4Data.total.sessions.toLocaleString()}
                         </div>
                       </div>
