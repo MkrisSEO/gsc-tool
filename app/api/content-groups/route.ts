@@ -173,6 +173,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log('📋 [POST content-group] Request:', {
+      name,
+      siteUrl,
+      conditionCount: conditions.length,
+      conditions: conditions.map((c: any) => ({
+        type: c.type,
+        operator: c.operator,
+        valuePreview: Array.isArray(c.value) ? `${c.value.length} URLs` : c.value?.substring(0, 50),
+      })),
+    });
+
     // Fetch all matching URLs from Search Console
     const matchedUrls = await fetchMatchingUrls(siteUrl, conditions, (session as any).accessToken);
 
@@ -189,11 +200,24 @@ export async function POST(request: NextRequest) {
 
     const created = createContentGroup(group);
 
+    console.log('✅ [POST content-group] Created:', {
+      id: created.id,
+      name: created.name,
+      urlCount: created.urlCount,
+    });
+
     return NextResponse.json({ group: created });
-  } catch (error) {
-    console.error('Error creating content group:', error);
+  } catch (error: any) {
+    console.error('❌ [POST content-group] Error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch matching URLs' },
+      { 
+        error: 'Failed to fetch matching URLs',
+        details: error.message || 'Unknown error',
+      },
       { status: 500 }
     );
   }
