@@ -16,6 +16,7 @@ interface AnnotationModalProps {
   selectedDate: string | null;
   onClose: () => void;
   onSave: (data: AnnotationFormData) => void;
+  contentGroups?: Array<{ id: string; name: string }>;
 }
 
 export default function AnnotationModal({
@@ -23,6 +24,7 @@ export default function AnnotationModal({
   selectedDate,
   onClose,
   onSave,
+  contentGroups = [],
 }: AnnotationModalProps) {
   const getToday = () => new Date().toISOString().split('T')[0];
   const [title, setTitle] = useState('');
@@ -37,6 +39,12 @@ export default function AnnotationModal({
       setAnnotationDate(selectedDate || getToday());
     }
   }, [isOpen, selectedDate]);
+
+  useEffect(() => {
+    if (scope === 'content_group' && contentGroups.length > 0 && !contentGroupId) {
+      setContentGroupId(contentGroups[0].id);
+    }
+  }, [scope, contentGroups, contentGroupId]);
 
   if (!isOpen) return null;
 
@@ -254,23 +262,31 @@ export default function AnnotationModal({
 
               {scope === 'content_group' && (
                 <div style={{ marginLeft: 30, marginTop: 8 }}>
-                  <select
-                    value={contentGroupId}
-                    onChange={(e) => setContentGroupId(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <option value="">Select a content group...</option>
-                    <option value="blog">Blog Posts</option>
-                    <option value="products">Product Pages</option>
-                    <option value="landing">Landing Pages</option>
-                  </select>
+                  {contentGroups.length > 0 ? (
+                    <select
+                      value={contentGroupId}
+                      onChange={(e) => setContentGroupId(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: 8,
+                        fontSize: 14,
+                        boxSizing: 'border-box',
+                      }}
+                      required
+                    >
+                      {contentGroups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>
+                      No content groups yet. Create one under Settings → Content Groups.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

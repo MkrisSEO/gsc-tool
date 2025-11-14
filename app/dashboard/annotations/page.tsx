@@ -62,6 +62,7 @@ export default function AnnotationsPage() {
   const [compareRange, setCompareRange] = useState<{ startDate: string; endDate: string } | null>(null);
   const [showAnnotationModal, setShowAnnotationModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [contentGroups, setContentGroups] = useState<Array<{ id: string; name: string }>>([]);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -81,6 +82,41 @@ export default function AnnotationsPage() {
       fetchAnnotations();
     }
   }, [selectedSite, dateRange, compareRange]);
+
+  useEffect(() => {
+    if (!selectedSite) {
+      setContentGroups([]);
+      return;
+    }
+
+    let cancelled = false;
+    async function fetchContentGroups() {
+      try {
+        const response = await fetch(`/api/content-groups?siteUrl=${encodeURIComponent(selectedSite)}`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch content groups');
+        }
+        const json = await response.json();
+        if (!cancelled) {
+          setContentGroups(json.groups || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch content groups:', error);
+        if (!cancelled) {
+          setContentGroups([]);
+        }
+      } finally {
+        // no-op
+      }
+    }
+
+    fetchContentGroups();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSite]);
 
   const fetchAnnotations = async () => {
     if (!selectedSite) return;
@@ -196,7 +232,10 @@ export default function AnnotationsPage() {
   const formatScopeLabel = (annotation: Annotation) => {
     if (annotation.scope === 'all') return 'All Pages';
     if (annotation.scope === 'specific') return `${annotation.urls?.length || 0} Specific Page(s)`;
-    if (annotation.scope === 'content_group') return `Content Group: ${annotation.contentGroupId}`;
+    if (annotation.scope === 'content_group') {
+      const groupName = contentGroups.find((group) => group.id === annotation.contentGroupId)?.name;
+      return `Content Group: ${groupName || annotation.contentGroupId || 'Unknown Group'}`;
+    }
     return annotation.scope;
   };
 
@@ -301,6 +340,7 @@ export default function AnnotationsPage() {
           setSelectedDate(null);
         }}
         onSave={handleCreateAnnotation}
+        contentGroups={contentGroups}
       />
 
       {error && (
