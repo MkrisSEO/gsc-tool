@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -49,6 +49,15 @@ interface ImpactMetrics {
   }>;
 }
 
+const normalizeSiteUrl = (siteUrl: string) => {
+  if (!siteUrl) return siteUrl;
+  const trimmed = siteUrl.trim();
+  if (trimmed.startsWith('sc-domain:')) {
+    return trimmed.toLowerCase();
+  }
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+};
+
 export default function AnnotationsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -64,6 +73,8 @@ export default function AnnotationsPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [contentGroups, setContentGroups] = useState<Array<{ id: string; name: string }>>([]);
 
+  const normalizedSiteUrl = useMemo(() => normalizeSiteUrl(selectedSite), [selectedSite]);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/');
@@ -78,13 +89,13 @@ export default function AnnotationsPage() {
   }, [status, router, searchParams]);
 
   useEffect(() => {
-    if (selectedSite) {
+    if (normalizedSiteUrl) {
       fetchAnnotations();
     }
-  }, [selectedSite, dateRange, compareRange]);
+  }, [normalizedSiteUrl, dateRange, compareRange]);
 
   useEffect(() => {
-    if (!selectedSite) {
+    if (!normalizedSiteUrl) {
       setContentGroups([]);
       return;
     }
@@ -92,7 +103,7 @@ export default function AnnotationsPage() {
     let cancelled = false;
     async function fetchContentGroups() {
       try {
-        const response = await fetch(`/api/content-groups?siteUrl=${encodeURIComponent(selectedSite)}`, {
+        const response = await fetch(`/api/content-groups?siteUrl=${encodeURIComponent(normalizedSiteUrl)}`, {
           cache: 'no-store',
         });
         if (!response.ok) {
@@ -116,16 +127,16 @@ export default function AnnotationsPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedSite]);
+  }, [normalizedSiteUrl]);
 
   const fetchAnnotations = async () => {
-    if (!selectedSite) return;
+    if (!normalizedSiteUrl) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/annotations?siteUrl=${encodeURIComponent(selectedSite)}`);
+      const response = await fetch(`/api/annotations?siteUrl=${encodeURIComponent(normalizedSiteUrl)}`);
       const json = await response.json();
       
       if (response.ok && json.annotations) {
@@ -136,7 +147,7 @@ export default function AnnotationsPage() {
         for (const annotation of json.annotations) {
           try {
             const impactUrl = new URL('/api/annotations/impact', window.location.origin);
-            impactUrl.searchParams.set('siteUrl', selectedSite);
+            impactUrl.searchParams.set('siteUrl', normalizedSiteUrl);
             impactUrl.searchParams.set('date', annotation.date);
             impactUrl.searchParams.set('scope', annotation.scope);
             if (annotation.urls && annotation.urls.length > 0) {
@@ -181,7 +192,7 @@ export default function AnnotationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          siteUrl: selectedSite,
+          siteUrl: normalizedSiteUrl,
         }),
       });
 
