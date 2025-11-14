@@ -64,43 +64,50 @@ export async function GET(request: NextRequest) {
     const annotationDateObj = new Date(annotationDate);
     
     // Use custom date ranges if provided, otherwise default to 14 days before/after
-    let beforeStart: Date | null;
-    let beforeEnd: Date | null;
-    let afterStart: Date | null;
-    let afterEnd: Date | null;
+    const hasCustomRange = Boolean(startDate && endDate);
+    const hasCompareRange = Boolean(compareStartDate && compareEndDate);
+
     let chartStart: Date;
     let chartEnd: Date;
 
-    if (startDate && endDate) {
-      chartStart = new Date(startDate);
-      chartEnd = new Date(endDate);
-
-      if (compareStartDate && compareEndDate) {
-        beforeStart = new Date(compareStartDate);
-        beforeEnd = new Date(compareEndDate);
-        afterStart = chartStart;
-        afterEnd = chartEnd;
-      } else {
-        const annotationTime = annotationDateObj.getTime();
-        const rangeStart = chartStart.getTime();
-        const rangeEnd = chartEnd.getTime();
-
-        const beforeEndCandidate = new Date(Math.min(annotationTime - DAY_IN_MS, rangeEnd));
-        beforeStart = chartStart;
-        beforeEnd = beforeEndCandidate.getTime() >= rangeStart ? beforeEndCandidate : null;
-
-        const afterStartCandidate = new Date(Math.max(annotationTime, rangeStart));
-        afterStart = afterStartCandidate.getTime() <= rangeEnd ? afterStartCandidate : null;
-        afterEnd = afterStart ? chartEnd : null;
-      }
+    if (hasCustomRange) {
+      chartStart = new Date(startDate!);
+      chartEnd = new Date(endDate!);
     } else {
-      // Default: 14 days before/after annotation
-      beforeStart = new Date(annotationDateObj.getTime() - 14 * DAY_IN_MS);
-      beforeEnd = new Date(annotationDateObj.getTime() - DAY_IN_MS);
-      afterStart = new Date(annotationDateObj.getTime() + DAY_IN_MS);
-      afterEnd = new Date(annotationDateObj.getTime() + 14 * DAY_IN_MS);
-      chartStart = beforeStart;
-      chartEnd = afterEnd;
+      const todayMinusTwo = new Date();
+      todayMinusTwo.setDate(todayMinusTwo.getDate() - 2);
+
+      const ageInDays = Math.floor((todayMinusTwo.getTime() - annotationDateObj.getTime()) / DAY_IN_MS);
+
+      if (ageInDays > 28) {
+        chartStart = new Date(annotationDateObj);
+      } else {
+        chartStart = new Date(todayMinusTwo);
+        chartStart.setDate(chartStart.getDate() - 27);
+      }
+
+      chartEnd = todayMinusTwo;
+
+      if (chartStart.getTime() > chartEnd.getTime()) {
+        chartStart = new Date(chartEnd);
+      }
+    }
+
+    let beforeStart: Date | null = null;
+    let beforeEnd: Date | null = null;
+    let afterStart: Date | null = null;
+    let afterEnd: Date | null = null;
+
+    if (hasCompareRange) {
+      beforeStart = new Date(compareStartDate!);
+      beforeEnd = new Date(compareEndDate!);
+      afterStart = chartStart;
+      afterEnd = chartEnd;
+    } else {
+      beforeStart = chartStart;
+      beforeEnd = chartEnd;
+      afterStart = chartStart;
+      afterEnd = chartEnd;
     }
 
     const formatDate = (date: Date) => date.toISOString().split('T')[0];
