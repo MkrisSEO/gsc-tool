@@ -64,30 +64,34 @@ export async function GET(request: NextRequest) {
     const annotationDateObj = new Date(annotationDate);
     
     // Use custom date ranges if provided, otherwise default to 14 days before/after
-    let beforeStart: Date, beforeEnd: Date, afterStart: Date, afterEnd: Date, chartStart: Date, chartEnd: Date;
+    let beforeStart: Date | null;
+    let beforeEnd: Date | null;
+    let afterStart: Date | null;
+    let afterEnd: Date | null;
+    let chartStart: Date;
+    let chartEnd: Date;
 
     if (startDate && endDate) {
-      // Use provided date range
       chartStart = new Date(startDate);
       chartEnd = new Date(endDate);
-      
-      // Calculate before/after based on annotation date position in range
-      const annotationTime = annotationDateObj.getTime();
-      const rangeStart = chartStart.getTime();
-      const rangeEnd = chartEnd.getTime();
-      
+
       if (compareStartDate && compareEndDate) {
-        // Use provided comparison range
         beforeStart = new Date(compareStartDate);
         beforeEnd = new Date(compareEndDate);
         afterStart = chartStart;
         afterEnd = chartEnd;
       } else {
-        // Default: 14 days before and after annotation
-        beforeStart = new Date(annotationTime - 14 * DAY_IN_MS);
-        beforeEnd = new Date(annotationTime - DAY_IN_MS);
-        afterStart = new Date(annotationTime + DAY_IN_MS);
-        afterEnd = new Date(annotationTime + 14 * DAY_IN_MS);
+        const annotationTime = annotationDateObj.getTime();
+        const rangeStart = chartStart.getTime();
+        const rangeEnd = chartEnd.getTime();
+
+        const beforeEndCandidate = new Date(Math.min(annotationTime - DAY_IN_MS, rangeEnd));
+        beforeStart = chartStart;
+        beforeEnd = beforeEndCandidate.getTime() >= rangeStart ? beforeEndCandidate : null;
+
+        const afterStartCandidate = new Date(Math.max(annotationTime, rangeStart));
+        afterStart = afterStartCandidate.getTime() <= rangeEnd ? afterStartCandidate : null;
+        afterEnd = afterStart ? chartEnd : null;
       }
     } else {
       // Default: 14 days before/after annotation
@@ -129,20 +133,21 @@ export async function GET(request: NextRequest) {
       return requestBody;
     };
 
+    const queryRange = async (start: Date | null, end: Date | null, dimensions: string[]) => {
+      if (!start || !end || end.getTime() < start.getTime()) {
+        return { data: { rows: [] } };
+      }
+      return webmasters.searchanalytics.query({
+        siteUrl,
+        requestBody: buildRequestBody(formatDate(start), formatDate(end), dimensions),
+      });
+    };
+
     // Fetch data for all three periods
     const [beforeRes, afterRes, chartRes] = await Promise.all([
-      webmasters.searchanalytics.query({
-        siteUrl,
-        requestBody: buildRequestBody(formatDate(beforeStart), formatDate(beforeEnd), ['date']),
-      }),
-      webmasters.searchanalytics.query({
-        siteUrl,
-        requestBody: buildRequestBody(formatDate(afterStart), formatDate(afterEnd), ['date']),
-      }),
-      webmasters.searchanalytics.query({
-        siteUrl,
-        requestBody: buildRequestBody(formatDate(chartStart), formatDate(chartEnd), ['date']),
-      }),
+      queryRange(beforeStart, beforeEnd, ['date']),
+      queryRange(afterStart, afterEnd, ['date']),
+      queryRange(chartStart, chartEnd, ['date']),
     ]);
 
     // Aggregate before period
