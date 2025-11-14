@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface AnnotationFormData {
   date: string;
@@ -24,11 +24,19 @@ export default function AnnotationModal({
   onClose,
   onSave,
 }: AnnotationModalProps) {
+  const getToday = () => new Date().toISOString().split('T')[0];
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [scope, setScope] = useState<'all' | 'specific' | 'content_group'>('all');
   const [urlsText, setUrlsText] = useState('');
   const [contentGroupId, setContentGroupId] = useState('');
+  const [annotationDate, setAnnotationDate] = useState<string>(selectedDate || getToday());
+
+  useEffect(() => {
+    if (isOpen) {
+      setAnnotationDate(selectedDate || getToday());
+    }
+  }, [isOpen, selectedDate]);
 
   if (!isOpen) return null;
 
@@ -55,7 +63,7 @@ export default function AnnotationModal({
       : [];
 
     onSave({
-      date: selectedDate || new Date().toISOString().split('T')[0],
+      date: annotationDate || getToday(),
       title: title.trim(),
       description: description.trim(),
       scope,
@@ -69,6 +77,7 @@ export default function AnnotationModal({
     setScope('all');
     setUrlsText('');
     setContentGroupId('');
+    setAnnotationDate(getToday());
   };
 
   const handleCancel = () => {
@@ -77,6 +86,7 @@ export default function AnnotationModal({
     setScope('all');
     setUrlsText('');
     setContentGroupId('');
+    setAnnotationDate(getToday());
     onClose();
   };
 
@@ -113,10 +123,30 @@ export default function AnnotationModal({
           Create Annotation
         </h2>
         <p style={{ margin: '0 0 24px', color: '#64748b', fontSize: 14 }}>
-          Add a note for {selectedDate ? new Date(selectedDate).toLocaleDateString() : 'selected date'}
+          Add a note for {annotationDate ? new Date(annotationDate).toLocaleDateString() : 'selected date'}
         </p>
 
         <form onSubmit={handleSubmit}>
+          {/* Date */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>
+              Annotation Date <span style={{ color: '#dc2626' }}>*</span>
+            </label>
+            <input
+              type="date"
+              value={annotationDate}
+              onChange={(e) => setAnnotationDate(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: 8,
+                fontSize: 14,
+                boxSizing: 'border-box',
+              }}
+              required
+            />
+          </div>
           {/* Title */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#0f172a' }}>

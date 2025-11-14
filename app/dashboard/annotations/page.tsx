@@ -368,8 +368,18 @@ export default function AnnotationsPage() {
                 <div style={{ padding: 24, borderBottom: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <h3 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{annotation.title}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: '#0f172a',
+                            letterSpacing: '-0.02em',
+                          }}
+                        >
+                          {annotation.title}
+                        </h3>
                         <span
                           style={{
                             padding: '4px 10px',
