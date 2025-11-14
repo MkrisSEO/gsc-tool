@@ -64,9 +64,29 @@ const mapAnnotation = (record: Prisma.AnnotationGetPayload<{ select: typeof anno
   siteUrl: record.site.siteUrl,
 });
 
+function normalizeSiteUrl(siteUrl: string): string {
+  if (!siteUrl) {
+    return siteUrl;
+  }
+
+  const trimmed = siteUrl.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('sc-domain:')) {
+    return trimmed.toLowerCase();
+  }
+
+  const ensuredSlash = trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  return ensuredSlash.replace(/\/+$/, '/');
+}
+
 async function getSiteIdForUrl(siteUrl: string, userEmail?: string): Promise<string> {
+  const normalizedSiteUrl = normalizeSiteUrl(siteUrl);
+
   let site = await prisma.site.findUnique({
-    where: { siteUrl },
+    where: { siteUrl: normalizedSiteUrl },
   });
 
   if (site) {
@@ -74,7 +94,7 @@ async function getSiteIdForUrl(siteUrl: string, userEmail?: string): Promise<str
   }
 
   if (!userEmail) {
-    throw new Error(`Site not found for URL ${siteUrl}`);
+    throw new Error(`Site not found for URL ${normalizedSiteUrl}`);
   }
 
   const user = await prisma.user.findUnique({
@@ -87,9 +107,9 @@ async function getSiteIdForUrl(siteUrl: string, userEmail?: string): Promise<str
 
   site = await prisma.site.create({
     data: {
-      siteUrl,
+      siteUrl: normalizedSiteUrl,
       userId: user.id,
-      displayName: siteUrl,
+      displayName: normalizedSiteUrl,
     },
   });
 
@@ -106,9 +126,11 @@ export async function getAllAnnotations(): Promise<AnnotationRecord[]> {
 }
 
 export async function getAnnotationsBySite(siteUrl: string): Promise<AnnotationRecord[]> {
+  const normalizedSiteUrl = normalizeSiteUrl(siteUrl);
+
   const annotations = await prisma.annotation.findMany({
     where: {
-      site: { siteUrl },
+      site: { siteUrl: normalizedSiteUrl },
     },
     select: annotationSelect,
     orderBy: { date: 'desc' },
@@ -127,7 +149,8 @@ export async function getAnnotationById(id: string): Promise<AnnotationRecord | 
 }
 
 export async function createAnnotation(input: AnnotationCreateInput): Promise<AnnotationRecord> {
-  const siteId = await getSiteIdForUrl(input.siteUrl, input.createdBy);
+  const normalizedSiteUrl = normalizeSiteUrl(input.siteUrl);
+  const siteId = await getSiteIdForUrl(normalizedSiteUrl, input.createdBy);
 
   const created = await prisma.annotation.create({
     data: {
